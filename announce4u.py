@@ -33,11 +33,11 @@ async def on_message(message):
             
     if header == f'{summon}sethub':
         if isinstance(message.channel , discord.DMChannel):
-            await channel.send("do this in a discord server first!")
+            await channel.send("Do this in a discord server first!")
         userList = getFile('users.json')
         for user in userList:
             if user['id'] == message.author.id:
-                await channel.send("set yourself as leader first!")
+                await channel.send("Set yourself as leader first!")
                 break
         channelList = getFile('channels.json')
         for user in channelList:
@@ -51,15 +51,15 @@ async def on_message(message):
         #-----------------------------
         #prelim checks
         if isinstance(message.channel, discord.DMChannel):
-            await channel.send("do this in your main hub server")
+            await channel.send("Do this in your main hub server")
             return
         if len(theMessage) > 2 or len(theMessage) < 2:
-            await channel.send("path names have to be one string, no spaces")
+            await channel.send("Path names have to be one string, no spaces")
             return
         pathFile = getFile('pathfile.json')
         for path in pathFile:
             if theMessage[1] == path["pathname"]:
-                await channel.send("this pathname already exists, try something else")
+                await channel.send("This pathname already exists, try something else")
                 return
         #-----------------------------
 
@@ -77,8 +77,12 @@ async def on_message(message):
                 ]
             }
         )
-        await channel.send(f'Path created with name {theMessage[1]}, path hub automatically set to {message.channel}, use -setHub in a channel in {message.channel.guild.name} to change hub for this path.')
+        await channel.send(f'Path created with name `{theMessage[1]}`, path hub automatically set to `{message.channel}`, use -setHub in a channel in `{message.channel.guild.name}` to change hub for this path.')
         saveFile(pathFile, 'pathfile.json')
+
+        approvedHubs = getFile('approvedhubs.json')
+        approvedHubs.append(message.channel.id)
+        saveFile(approvedHubs, 'approvedhubs.json')
 
     #sets the hub
     if header == f'{summon}sethub':
@@ -86,10 +90,10 @@ async def on_message(message):
         #-----------------------------
         #prelim checks
         if isinstance(message.channel, discord.DMChannel):
-            await channel.send("do this in a server, and do it in the channel you intend to be the hub")
+            await channel.send("Do this in a server, and do it in the channel you intend to be the hub")
             return
         if len(theMessage) > 2:
-            await channel.send("path names have to be one 'word', with no spaces")
+            await channel.send("Path names have to be one 'word', with no spaces")
             return
         #-----------------------------
 
@@ -106,10 +110,9 @@ async def on_message(message):
             return
         #-----------------------------
 
-        pathLeaders = path2Edit['pathleaders']
-
         #-----------------------------
         #even more checks
+        pathLeaders = path2Edit['pathleaders']
         isLeader = False
         for leader in pathLeaders:
             if message.author.id == leader:
@@ -119,10 +122,77 @@ async def on_message(message):
             return
         #-----------------------------
 
-        path2Edit[3] = message.channel.id
-        await channel.send(f'Successfully set Path hub to {message.channel.name}')
-        
+        approvedHubs = getFile('approvedhubs.json') 
+        approvedHubs.remove(path2Edit["pathhub"])
+        approvedHubs.append(message.channel.id)
+        saveFile(approvedHubs, 'approvedhubs.json')
 
-    return
+        path2Edit["pathhub"] = message.channel.id
+        saveFile(pathFile, 'pathfile.json')
+        await channel.send(f'Successfully set Path hub to `{message.channel.name}`')
+
+        
+    
+    if header == f'{summon}addbranch':
+
+        #-----------------------------
+        #prelim checks
+        if isinstance(message.channel, discord.DMChannel):
+            await channel.send("Do this in a server, and do it in the channel you intend to be the hub")
+            return
+        if len(theMessage) > 2:
+            await channel.send("Path names have to be one 'word', with no spaces")
+            return
+        #-----------------------------
+
+        pathFile = getFile('pathfile.json')
+        for paths in pathFile:
+            if paths['pathname'] == theMessage[1]:
+                path2Edit = paths
+
+        #-----------------------------
+        #more checks
+        if path2Edit == []:
+            await channel.send("oops, I don't think that path exists yet. use -createpath {nameofpath} to create a path")
+            return
+        #-----------------------------
+
+        #-----------------------------
+        #even more checks
+        pathLeaders = path2Edit['pathleaders']
+        pathBranches = path2Edit['pathbranches']
+        isLeader = False
+        isPath = False
+
+        for leader in pathLeaders:
+            if message.author.id == leader:
+                isLeader = True
+        if isLeader == False:
+            await channel.send("Oops, you're not a leader of this path, so you can't edit it. :feelsbadman:")
+            return
+
+        for branch in pathBranches:
+            if branch == message.channel.id:
+                isPath = True
+        if isPath == True:
+            await channel.send("You've already added this channel as a branch")
+            return
+        #-----------------------------
+
+        path2Edit['pathbranches'].append(message.channel.id)
+        saveFile(pathFile, 'pathfile.json')
+        await channel.send(f'Added `{message.channel.name}` to path `{path2Edit["pathname"]}`')
+
+    if header == f'{summon}publish':
+        if message.channel.id in getFile('approvedhubs.json'):
+            content = ' '.join(theMessage[1:])
+            pathFile = getFile('pathfile.json')
+            for path in pathFile:
+                if path["pathhub"] == message.channel.id:
+                    if len(path["pathbranches"]) != 0:
+                        for branch in path["pathbranches"]:
+                            channel2send2 = client.get_channel(branch)
+                            await channel2send2.send(content)
+
 
 client.run(TOKEN)

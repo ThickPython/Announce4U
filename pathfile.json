@@ -1,27 +1,13 @@
 [
     {
-        "pathname": "testpath",
-        "pathserver": "servername",
-        "pathleaders": [],
-        "pathhub": "bruh",
-        "pathbranches": []
-    },
-    {
-        "pathname": "bruh",
-        "pathserver": 693567547596865616,
-        "pathleaders": [
-            241288855368499200
-        ],
-        "pathhub": 693567547596865619,
-        "pathbranches": []
-    },
-    {
         "pathname": "pathtest",
         "pathserver": 697669290865983558,
         "pathleaders": [
             241288855368499200
         ],
         "pathhub": 697669290865983562,
-        "pathbranches": []
+        "pathbranches": [
+            697670158893842446
+        ]
     }
 ]
