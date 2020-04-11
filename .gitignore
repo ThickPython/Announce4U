@@ -127,3 +127,4 @@ settings.json
 # Pyre type checker
 .pyre/
 settings.json
+*.json
