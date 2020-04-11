@@ -296,7 +296,7 @@ async def on_message(message):
     #faq
     if header == f'{summon}faq':
         embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked") 
-        embedFaq.add_field(title = "Can it function where it just automatically publishes a message from a channel?", value = "Kinda, originally it could do that, but the idea was scrapped in favor for a {summon}publish anywhere approach", inline = False)
-
+        embedFaq.add_field(name = "Can it function where it just automatically publishes a message from a channel?", value = "Kinda, originally it could do that, but the idea was scrapped in favor for a {summon}publish anywhere approach", inline = False)
+        await channel.send(embed = embedFaq)
 
 client.run(TOKEN)
