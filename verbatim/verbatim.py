@@ -8,6 +8,36 @@ TOKEN = settings["discord token"]
 
 client = discord.Client()
 
+COMMAND_DESCRIPTIONS = {
+    'register': ("Registers you to Verbatim's 'database' of sorts. "
+                 "It makes things faster I guess, and makes it so different users can have the same path name."),
+    'createpath `path name`': "Creates your first path and automatically assigns the hub to your current channel.",
+    'sethub `path name`': ("Assigns a hub for your path, this is where you do all your publishing, "
+                           "it helps optimize things and prevents cluttering"),
+    'addbranch `path name`': ("Adds a branch to a path, this way you can publish in the hub and all "
+                              "those messages will be passed down to the branches"),
+    'publish `path name` `content`': ("Publishes your messages in a typical text form through a branch "
+                                      "of your choice\n(Remember to do this in your path's hub, also you "
+                                      "can't ping roles because Discord API)"),
+    'viewpaths': "View your currently registered paths, including branches",
+    'removepath `path name`':"Deletes a path, note, there is no confirmation, so you do it once, and it's gone",
+    'removebranch `path name` `channel ID`':"Deletes a branch, no confirmation, get channel ID with -viewpaths",
+    'faq': ("Few some questions and answers (they aren't really 'frequently' "
+            "asked because as of now the bot isn't popular enough :/)"),
+}
+
+
+async def print_help(summon: str, channel) -> None:
+    embed_help = discord.Embed(
+        title="Help",
+        description="A quick how 2 on how to do things",
+        color=discord.Color.dark_orange(),
+    )
+    for key, value in COMMAND_DESCRIPTIONS.items():
+        embed_help.add_field(name=f'{summon}{key}', value=value, inline=False)
+    await channel.send(embed=embed_help)
+
+
 @client.event
 async def on_ready():
     print('lets get this party started')
@@ -37,16 +67,7 @@ async def on_message(message):
 
     #it's the help page u maga 4head
     if header == f'{summon}help':
-        embedHelp = discord.Embed(title = "Help", description = "A quick how 2 on how to do things", color = discord.Color.dark_orange())
-        embedHelp.add_field(name = f'{summon}register', value = "Registers you to Verbatim's 'database' of sorts. It makes things faster I guess, and makes it so different users can have the same path name.", inline = False)
-        embedHelp.add_field(name = f'{summon}createpath `path name`', value = "Creates your first path", inline = False)
-        embedHelp.add_field(name = f'{summon}addbranch `path name`', value = "Adds a branch to a path, this way you can publish from wherever", inline = False)
-        embedHelp.add_field(name = f'{summon}publish `path name` `content`', value = "Publishes your messages in a typical text form through a path of your choice, also you can't ping roles because Discord API)", inline = False)
-        embedHelp.add_field(name = f'{summon}viewpaths', value = "View your currently registered paths, including branches", inline = False)
-        embedHelp.add_field(name = f'{summon}removepath `path name`', value = "Deletes a path, note, there is no confirmation, so you do it once, and it's gone", inline = False)
-        embedHelp.add_field(name = f'{summon}removebranch `path name` `channel ID`', value = "Deletes a branch, no confirmation, get channel ID with {summon}viewpaths")
-        embedHelp.add_field(name = f'{summon}faq', value = "Few some questions and answers (they aren't really 'frequently' asked because as of now the bot isn't popular enough :/)", inline = False)
-        await channel.send(embed = embedHelp)
+        await print_help(summon=summon, channel=channel)
 
     #registers a user to the bot
     if header == f'{summon}register':
@@ -79,7 +100,7 @@ async def on_message(message):
         if len(theMessage) > 2 or len(theMessage) < 2:
             await channel.send("Path names have to be one string, no spaces")
             return
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
 
         if stringId not in pathFile:
             await channel.send("You have to -register first before creating a path")
@@ -295,7 +316,7 @@ async def on_message(message):
 
     #faq
     if header == f'{summon}faq':
-        embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked") 
+        embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked")
         embedFaq.add_field(name = "Can it function where it just automatically publishes a message from a channel?", value = "Kinda, originally it could do that, but the idea was scrapped in favor for a {summon}publish anywhere approach", inline = False)
         await channel.send(embed = embedFaq)
 
