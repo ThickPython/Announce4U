@@ -4,6 +4,7 @@ setup(
     name="verbatim",
     version="0.0.1",
     packages=['verbatim'],
+    install_requires=['discord'],
     url='',
     license='',
     author='Rez',
