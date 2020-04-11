@@ -9,13 +9,13 @@
 ## How many steps does it take? Let's count. 1, 2, 3, 4 done
  Verbatim has an extremely easy set up process, here's how to do it
  
- 1. Register yourself with *register {a nickname of your choice}*
+ 1. Register yourself with *-register {a nickname of your choice}*
     - That's it, do that once and you're ready to start making paths 
- 2. Create a path with *createpath {name of path}* 
+ 2. Create a path with *-createpath {name of path}* 
     - A path name has to be unique, but don't worry about sharing names with others, unique path names are specific to YOU
- 3. Add branches with *addbranch {name of path}*
+ 3. Add branches with *-addbranch {name of path}*
     - Do this in a channel of your choice, once you do that the channel is "attached" to your path, then you're ready to publish
- 4. Publish a message with *publish {name of path} {content}*
+ 4. Publish a message with *-publish {name of path} {content}*
     - Do this in your path's "Hub", by default it's set to wherever you created the path, but you can change it via *-sethub {path name}*
     
  
