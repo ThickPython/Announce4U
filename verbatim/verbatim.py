@@ -1,6 +1,6 @@
 import discord
-import json
-from otherThings import getFile, saveFile
+
+from verbatim.otherThings import getFile, saveFile
 
 settings = getFile('settings.json')
 TOKEN = settings["discord token"]
@@ -34,7 +34,7 @@ async def on_message(message):
     header = theMessage[0].lower()
     channel = message.channel
 
-    
+
     #it's the help page u maga 4head
     if header == f'{summon}help':
         embedHelp = discord.Embed(title = "Help", description = "A quick how 2 on how to do things", color = discord.Color.dark_orange())
@@ -51,7 +51,7 @@ async def on_message(message):
 
     #registers a user to the bot
     if header == f'{summon}register':
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
         isUser = False
         for user in pathFile:
             if user == str(message.author.id):
@@ -63,7 +63,7 @@ async def on_message(message):
             "paths":{}
         }
         await channel.send(f'Registered {message.author}')
-        saveFile(pathFile, 'pathfile.json')
+        saveFile(pathFile, '../../pathfile.json')
 
     #creates a path
     if header == f'{summon}createpath':
@@ -80,7 +80,7 @@ async def on_message(message):
         if len(theMessage) > 2 or len(theMessage) < 2:
             await channel.send("Path names have to be one string, no spaces")
             return
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
 
         if stringId not in pathFile:
             await channel.send("You have to -register first before creating a path")
@@ -93,8 +93,8 @@ async def on_message(message):
                     await channel.send(f"You already have a path by the name of {theMessage[1]}")
                     return
         #-----------------------------
-        
-        approvedHubs = getFile('approvedhubs.json')
+
+        approvedHubs = getFile('../../approvedhubs.json')
 
         if stringChannelId in approvedHubs:
             #see if there is a path registered under that hub for that user
@@ -107,13 +107,13 @@ async def on_message(message):
             if stringId not in approvedHubs[stringChannelId]: #is a string because dictionaries are weird
                 approvedHubs[stringChannelId][stringId] = theMessage[1]
 
-        
+
         if stringChannelId not in approvedHubs:
             approvedHubs[stringChannelId] = {
                 stringId:theMessage[1]
             }
         #-----------------------------
-        
+
         userPaths[theMessage[1]] = {
                 "pathserver":message.channel.guild.id,
                 "pathhub":str(message.channel.id),
@@ -121,21 +121,21 @@ async def on_message(message):
                 ]
             }
         await channel.send(f'Path created with name `{theMessage[1]}`, path hub automatically set to `{message.channel}`, use -setHub in a channel in `{message.channel.guild.name}` to change hub for this path.')
-        saveFile(pathFile, 'pathfile.json')
-        saveFile(approvedHubs, 'approvedhubs.json')
-   
+        saveFile(pathFile, '../../pathfile.json')
+        saveFile(approvedHubs, '../../approvedhubs.json')
+
     #sets the hub
     if header == f'{summon}sethub':
-        
-        pathFile = getFile('pathfile.json')
-        approvedHubs = getFile('approvedhubs.json') 
+
+        pathFile = getFile('../../pathfile.json')
+        approvedHubs = getFile('../../approvedhubs.json')
         if len(theMessage) == 1:
             await channel.send("You have to specify that path you're assigning this channel to!")
             return
         pathName = theMessage[1]
         stringId = str(message.author.id)
         stringHubId = str(message.channel.id)
-        
+
 
         #-----------------------------
         #prelim checks
@@ -145,16 +145,16 @@ async def on_message(message):
         if len(theMessage) > 2:
             await channel.send("Path names have to be one string, with no spaces")
             return
-        
+
         if stringId not in pathFile:
             await channel.send("You haven't registered yet!")
             return
-        
+
         userPaths = pathFile[stringId]["paths"]
         if len(userPaths) == 0:
             await channel.send("You haven't created a path yet, how are you gonna set up a hub :thonk:")
             return
-        
+
         if pathName not in userPaths:
             await channel.send("You haven't made a path under that name yet")
             return
@@ -165,12 +165,12 @@ async def on_message(message):
             await channel.send("This path is already set to this channel!")
             return
         #-----------------------------
-        
-        
+
+
 
         if pathName in userPaths:
             del(approvedHubs[oldStringHubId][stringId])
-            
+
             #if the hub isn't registered
             if stringHubId not in approvedHubs:
                 userPaths[pathName]["pathhub"] = stringHubId
@@ -183,13 +183,13 @@ async def on_message(message):
                 approvedHubs[stringHubId][stringId] = pathName
                 userPaths[pathName]["pathhub"] = stringHubId
                 await channel.send(f'Successfully set the hub for `{pathName}` to channel `#{message.channel.name}`')
-        saveFile(approvedHubs, 'approvedhubs.json')
-        saveFile(pathFile, 'pathfile.json')
-        
+        saveFile(approvedHubs, '../../approvedhubs.json')
+        saveFile(pathFile, '../../pathfile.json')
+
     #adds a branch
     if header == f'{summon}addbranch':
 
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
         pathName = theMessage[1]
         stringId = str(message.author.id)
 
@@ -203,7 +203,7 @@ async def on_message(message):
             return
         #-----------------------------
 
-        
+
         if stringId not in pathFile:
             await channel.send("You must first register before creating your path... before then, assigning a hub...")
             return
@@ -213,22 +213,22 @@ async def on_message(message):
         if len(userPaths) == 0 or pathName not in userPaths:
             await channel.send("You can't add a branch to a path that doesn't exist!")
             return
-        
+
         branches = userPaths[pathName]["pathbranches"]
         if message.channel.id in branches:
             await channel.send("You've already added this channel!")
             return
         branches.append(message.channel.id)
 
-        saveFile(pathFile, 'pathfile.json')
+        saveFile(pathFile, '../../pathfile.json')
         await channel.send(f'Successfully added `#{message.channel.name}` to path `{pathName}`')
 
     #views paths
     if header == f'{summon}viewpaths':
 
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
         stringId = str(message.author.id)
-        
+
 
         #-----------------------------
         #checks
@@ -236,7 +236,7 @@ async def on_message(message):
         if stringId not in pathFile:
             await channel.send("You have to register first, and then create a path")
             return
-        
+
         if len(pathFile[stringId]["paths"]) == 0:
             await channel.send("You don't have any paths!")
             return
@@ -263,13 +263,13 @@ async def on_message(message):
 
     #publishes a message
     if header == f'{summon}publish':
-        
-        approvedHubs = getFile('approvedhubs.json')
+
+        approvedHubs = getFile('../../approvedhubs.json')
         pathName = theMessage[1]
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
         stringUserId = str(message.author.id)
         stringChannelId = str(message.channel.id)
-        
+
         #checks
 
         if stringUserId not in pathFile:
@@ -278,11 +278,11 @@ async def on_message(message):
 
         if stringChannelId not in approvedHubs:
             return
-        
+
         if len(pathFile[stringUserId]["paths"]) == 0:
             await channel.send("You haven't created any paths yet, how are you gonna send again? :think:")
             return
-        
+
         if pathName not in pathFile[stringUserId]["paths"]:
             await channel.send(f"You haven't created a path under the name `{pathName}` yet")
             return
@@ -295,7 +295,7 @@ async def on_message(message):
             await channel.send("Your message actually needs to have content")
             return
         #-----------------------------
-        
+
         for branch in pathFile[stringUserId]["paths"][pathName]["pathbranches"]:
             if len(theMessage) > 3:
                 content = ' '.join(theMessage[2:])
@@ -310,11 +310,11 @@ async def on_message(message):
         if len(theMessage) < 2:
             await channel.send("You have to specificy a path to delete!")
             return
-        
-        pathFile = getFile('pathfile.json')
+
+        pathFile = getFile('../../pathfile.json')
         stringId = str(message.author.id)
         pathName = theMessage[1]
-        approvedHubs = getFile('approvedhubs.json')
+        approvedHubs = getFile('../../approvedhubs.json')
         userPaths = pathFile[stringId]["paths"]
 
         if stringId not in pathFile:
@@ -328,14 +328,14 @@ async def on_message(message):
         if pathName not in userPaths:
             await channel.send(f"You don't have a path under the name of `{pathName}`, use `-viewpaths` to view your created paths")
             return
-        
+
         del(approvedHubs[userPaths[pathName]["pathhub"]][stringId])
-        saveFile(approvedHubs, 'approvedhubs.json')
+        saveFile(approvedHubs, '../../approvedhubs.json')
 
         del(pathFile[stringId]["paths"][pathName])
         await channel.send("lol ok")
         await channel.send(f"Deleted path `{pathName}`")
-        saveFile(pathFile, 'pathfile.json')
+        saveFile(pathFile, '../../pathfile.json')
 
     #deletes a branch from a path
     if header == f'{summon}removebranch':
@@ -346,7 +346,7 @@ async def on_message(message):
             await channel.send("Uh, you might think this bot excepts a lot of variables... there's 3, actually")
             return
 
-        pathFile = getFile('pathfile.json')
+        pathFile = getFile('../../pathfile.json')
         stringId = str(message.author.id)
         pathName = theMessage[1]
         pathBranch = int(theMessage[2])
@@ -367,20 +367,20 @@ async def on_message(message):
         if paths[pathName]["pathbranches"] == []:
             await channel.send("Your path first has to have branches before I can remove them ")
             return
-        
+
         if pathBranch not in paths[pathName]["pathbranches"]:
             await channel.send("So like, `{client.get_channel(pathBranch).name}`'s not, that's not a branch you have installed on your path (pro tip: use -viewpaths)")
             return
-        
+
         paths[pathName]["pathbranches"].remove(pathBranch)
         await channel.send(f"Sucessfully deleted branch `#{client.get_channel(pathBranch).name}` from path `{pathName}`")
-        saveFile(pathFile, 'pathfile.json')
+        saveFile(pathFile, '../../pathfile.json')
 
     #changes the summon for a thing
     if header == f'{summon}summon':
         if len(theMessage) != 2:
             await channel.send("Summons have to be 1 string only, with no spaces")
-        
+
         else:
             strGuild = str(message.guild.id)
             summons = getFile('summons.json')
@@ -390,9 +390,8 @@ async def on_message(message):
 
     #faq
     if header == f'{summon}faq':
-        embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked") 
-        embedHelp.add_field(name = "What's the point of hubs?", value = "This bot scans everything, it would be a pain to sort thorugh every user and check if that channel is in a path, instead only hubs are checked", inline = False)       
-
+        embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked")
+        embedHelp.add_field(name = "What's the point of hubs?", value = "This bot scans everything, it would be a pain to sort thorugh every user and check if that channel is in a path, instead only hubs are checked", inline = False)
 
 
 client.run(TOKEN)
