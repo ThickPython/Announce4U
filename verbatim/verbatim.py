@@ -8,6 +8,36 @@ TOKEN = settings["discord token"]
 
 client = discord.Client()
 
+COMMAND_DESCRIPTIONS = {
+    'register': ("Registers you to Verbatim's 'database' of sorts. "
+                 "It makes things faster I guess, and makes it so different users can have the same path name."),
+    'createpath `path name`': "Creates your first path and automatically assigns the hub to your current channel.",
+    'sethub `path name`': ("Assigns a hub for your path, this is where you do all your publishing, "
+                           "it helps optimize things and prevents cluttering"),
+    'addbranch `path name`': ("Adds a branch to a path, this way you can publish in the hub and all "
+                              "those messages will be passed down to the branches"),
+    'publish `path name` `content`': ("Publishes your messages in a typical text form through a branch "
+                                      "of your choice\n(Remember to do this in your path's hub, also you "
+                                      "can't ping roles because Discord API)"),
+    'viewpaths': "View your currently registered paths, including branches",
+    'removepath `path name`':"Deletes a path, note, there is no confirmation, so you do it once, and it's gone",
+    'removebranch `path name` `channel ID`':"Deletes a branch, no confirmation, get channel ID with -viewpaths",
+    'faq': ("Few some questions and answers (they aren't really 'frequently' "
+            "asked because as of now the bot isn't popular enough :/)"),
+}
+
+
+async def print_help(summon: str, channel) -> None:
+    embed_help = discord.Embed(
+        title="Help",
+        description="A quick how 2 on how to do things",
+        color=discord.Color.dark_orange(),
+    )
+    for key, value in COMMAND_DESCRIPTIONS.items():
+        embed_help.add_field(name=f'{summon}{key}', value=value, inline=False)
+    await channel.send(embed=embed_help)
+
+
 @client.event
 async def on_ready():
     print('lets get this party started')
@@ -37,17 +67,7 @@ async def on_message(message):
 
     #it's the help page u maga 4head
     if header == f'{summon}help':
-        embedHelp = discord.Embed(title = "Help", description = "A quick how 2 on how to do things", color = discord.Color.dark_orange())
-        embedHelp.add_field(name = f'{summon}register', value = "Registers you to Verbatim's 'database' of sorts. It makes things faster I guess, and makes it so different users can have the same path name.", inline = False)
-        embedHelp.add_field(name = f'{summon}createpath `path name`', value = "Creates your first path and automatically assigns the hub to your current channel.", inline = False)
-        embedHelp.add_field(name = f'{summon}sethub `path name`', value = "Assigns a hub for your path, this is where you do all your publishing, it helps optimize things and prevents cluttering", inline = False)
-        embedHelp.add_field(name = f'{summon}addbranch `path name`', value = "Adds a branch to a path, this way you can publish in the hub and all those messages will be passed down to the branches", inline = False)
-        embedHelp.add_field(name = f'{summon}publish `path name` `content`', value = "Publishes your messages in a typical text form through a branch of your choice\n(Remember to do this in your path's hub, also you can't ping roles because Discord API)", inline = False)
-        embedHelp.add_field(name = f'{summon}viewpaths', value = "View your currently registered paths, including branches", inline = False)
-        embedHelp.add_field(name = f'{summon}removepath `path name`', value = "Deletes a path, note, there is no confirmation, so you do it once, and it's gone", inline = False)
-        embedHelp.add_field(name = f'{summon}removebranch `path name` `channel ID`', value = "Deletes a branch, no confirmation, get channel ID with -viewpaths")
-        embedHelp.add_field(name = f'{summon}faq', value = "Few some questions and answers (they aren't really 'frequently' asked because as of now the bot isn't popular enough :/)", inline = False)
-        await channel.send(embed = embedHelp)
+        await print_help(summon=summon, channel=channel)
 
     #registers a user to the bot
     if header == f'{summon}register':
