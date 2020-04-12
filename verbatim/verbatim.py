@@ -4,6 +4,7 @@ from verbatim.otherThings import get_file, save_file
 
 settings = get_file('settings.json')
 TOKEN = settings["discord token"]
+embed_color = settings["color"]
 
 
 client = discord.Client()
@@ -21,6 +22,7 @@ COMMAND_DESCRIPTIONS = [
     ('removebranch `path name` `channel ID`', "Deletes a branch, no confirmation, get channel ID with -viewpaths"),
     ('faq', ("Few some questions and answers (they aren't really 'frequently' "
             "asked because as of now the bot isn't popular enough :/)")),
+    ('ping', ("Gets your latency and things like that"))
 ]
 
 
@@ -33,10 +35,10 @@ async def print_help(summon: str, channel) -> None:
     embed_help = discord.Embed(
         title="Help",
         description="A quick how 2 on how to do things",
-        color=discord.Color.dark_orange(),
+        color=discord.Colour(embed_color),
     )
     for command, description in COMMAND_DESCRIPTIONS:
-        embed_help.add_field(name=f'`{summon}{command}`', value=description, inline=False)
+        embed_help.add_field(name=f'{summon}{command}', value=description, inline=False)
     await channel.send(embed=embed_help)
     await channel.send(embed=embed_help)
 
@@ -55,7 +57,8 @@ async def register(message, channel) -> None:
 
 @client.event
 async def on_ready():
-    print('lets get this party started')
+    await client.change_presence(status = discord.Status.online, activity= discord.Game(name = "-help"))
+    print('Ready to start b r a n c h i n g out, haha get it?')
 
 @client.event
 async def on_message(message):
@@ -94,9 +97,7 @@ async def on_message(message):
     #creates a path
     if header == f'{summon}createpath':
 
-
         stringId = str(message.author.id)
-        stringChannelId = str(message.channel.id)
 
         #-----------------------------
         #prelim checks
@@ -144,7 +145,6 @@ async def on_message(message):
             return
         #-----------------------------
 
-
         if stringId not in path_file:
             await channel.send("You must first register before adding branches")
             return
@@ -170,7 +170,6 @@ async def on_message(message):
         path_file = get_file('pathfile.json')
         string_id = str(message.author.id)
 
-
         #-----------------------------
         #checks
 
@@ -181,6 +180,8 @@ async def on_message(message):
         if len(path_file[stringId]["paths"]) == 0:
             await channel.send("You don't have any paths!")
             return
+        #-----------------------------
+
 
         if message.author.dm_channel == None:
             await message.author.create_dm()
@@ -207,6 +208,7 @@ async def on_message(message):
         path_file = get_file('pathfile.json')
         string_user_id = str(message.author.id)
 
+        #-----------------------------
         #checks
 
         if string_user_id not in path_file:
@@ -241,6 +243,9 @@ async def on_message(message):
     #deletes a path
     if header == f'{summon}removepath':
 
+        #-----------------------------
+        #checks
+
         if len(the_message) < 2:
             await channel.send("You have to specificy a path to delete!")
             return
@@ -261,6 +266,7 @@ async def on_message(message):
         if path_name not in userPaths:
             await channel.send(f"You don't have a path under the name of `{path_name}`, use `-viewpaths` to view your created paths")
             return
+        #-----------------------------
 
         del(path_file[stringId]["paths"][path_name])
         await channel.send("lol ok")
@@ -269,6 +275,10 @@ async def on_message(message):
 
     #deletes a branch from a path
     if header == f'{summon}removebranch':
+
+        #-----------------------------
+        #checks
+
         if len(the_message) < 3:
             await channel.send("You're missing some variables there")
             return
@@ -301,6 +311,7 @@ async def on_message(message):
         if path_branch not in paths[path_name]["pathbranches"]:
             await channel.send("So like, `{client.get_channel(path_branch).name}`'s not, that's not a branch you have installed on your path (pro tip: use -viewpaths)")
             return
+        #-----------------------------
 
         paths[path_name]["pathbranches"].remove(path_branch)
         await channel.send(
@@ -324,5 +335,9 @@ async def on_message(message):
     if header == f'{summon}faq':
         embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked")
         await channel.send(embed = embedFaq)
+
+    if header == f'{summon}ping':
+        embedPing = discord.Embed(title = "Ping!", description = f'Ping! {round(client.latency, 2)} ms', color = discord.Colour(embed_color))
+        await channel.send(embed = embedPing)
 
 client.run(TOKEN)
