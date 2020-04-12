@@ -76,26 +76,13 @@ async def on_message(message):
     header = theMessage[0].lower()
     channel = message.channel
 
-
-    #it's the help page u maga 4head
+    # it's the help page u maga 4head`
     if header == f'{summon}help':
         await print_help(summon=summon, channel=channel)
 
-    #registers a user to the bot
-    if header == f'{summon}register':
-        pathFile = get_file('../../pathfile.json')
-        isUser = False
-        for user in pathFile:
-            if user == str(message.author.id):
-                isUser = True
-        if isUser:
-            await channel.send("you've already registered!")
-            return
-        pathFile[message.author.id] = {
-            "paths":{}
-        }
-        await channel.send(f'Registered {message.author}')
-        save_file(pathFile, '../../pathfile.json')
+    # registers a user to the bot
+    elif header == f'{summon}register':
+        await register(message, channel)
 
     #creates a path
     if header == f'{summon}createpath':
@@ -112,7 +99,7 @@ async def on_message(message):
         if len(theMessage) > 2 or len(theMessage) < 2:
             await channel.send("Path names have to be one string, no spaces")
             return
-        pathFile = get_file('../../pathfile.json')
+        path_file = get_file('pathfile.json')
 
         if stringId not in pathFile:
             await channel.send("You have to -register first before creating a path")
@@ -136,9 +123,9 @@ async def on_message(message):
     #adds a branch
     if header == f'{summon}addbranch':
 
-        pathFile = get_file('../../pathfile.json')
-        pathName = theMessage[1]
-        stringId = str(message.author.id)
+        path_file = get_file('pathfile.json')
+        path_name = the_message[1]
+        string_id = str(message.author.id)
 
         #-----------------------------
         #prelim checks
@@ -167,14 +154,14 @@ async def on_message(message):
             return
         branches.append(message.channel.id)
 
-        save_file(pathFile, '../../pathfile.json')
-        await channel.send(f'Successfully added `#{message.channel.name}` to path `{pathName}`')
+        save_file(path_file, 'pathfile.json')
+        await channel.send(f'Successfully added `#{message.channel.name}` to path `{path_name}`')
 
     #views paths
     if header == f'{summon}viewpaths':
 
-        pathFile = get_file('../../pathfile.json')
-        stringId = str(message.author.id)
+        path_file = get_file('pathfile.json')
+        string_id = str(message.author.id)
 
 
         #-----------------------------
@@ -209,10 +196,9 @@ async def on_message(message):
     #publishes a message
     if header == f'{summon}publish':
 
-        pathName = theMessage[1]
-        pathFile = get_file('../../pathfile.json')
-        stringUserId = str(message.author.id)
-        stringChannelId = str(message.channel.id)
+        path_name = the_message[1]
+        path_file = get_file('pathfile.json')
+        string_user_id = str(message.author.id)
 
         #checks
 
@@ -252,10 +238,10 @@ async def on_message(message):
             await channel.send("You have to specificy a path to delete!")
             return
 
-        pathFile = get_file('../../pathfile.json')
-        stringId = str(message.author.id)
-        pathName = theMessage[1]
-        userPaths = pathFile[stringId]["paths"]
+        path_file = get_file('pathfile.json')
+        string_id = str(message.author.id)
+        path_name = the_message[1]
+        user_paths = path_file[string_id]["paths"]
 
         if stringId not in pathFile:
             await channel.send("You have to register first!")
@@ -271,8 +257,8 @@ async def on_message(message):
 
         del(pathFile[stringId]["paths"][pathName])
         await channel.send("lol ok")
-        await channel.send(f"Deleted path `{pathName}`")
-        save_file(pathFile, '../../pathfile.json')
+        await channel.send(f"Deleted path `{path_name}`")
+        save_file(path_file, 'pathfile.json')
 
     #deletes a branch from a path
     if header == f'{summon}removebranch':
@@ -283,11 +269,11 @@ async def on_message(message):
             await channel.send("Uh, you might think this bot excepts a lot of variables... there's 3, actually")
             return
 
-        pathFile = get_file('../../pathfile.json')
-        stringId = str(message.author.id)
-        pathName = theMessage[1]
-        pathBranch = int(theMessage[2])
-        paths = pathFile[stringId]["paths"]
+        path_file = get_file('pathfile.json')
+        string_id = str(message.author.id)
+        path_name = the_message[1]
+        path_branch = int(the_message[2])
+        paths = path_file[string_id]["paths"]
 
         if stringId not in pathFile:
             await channel.send("You have to first register!")
@@ -309,9 +295,11 @@ async def on_message(message):
             await channel.send("So like, `{client.get_channel(pathBranch).name}`'s not, that's not a branch you have installed on your path (pro tip: use -viewpaths)")
             return
 
-        paths[pathName]["pathbranches"].remove(pathBranch)
-        await channel.send(f"Sucessfully deleted branch `#{client.get_channel(pathBranch).name}` from path `{pathName}`")
-        save_file(pathFile, '../../pathfile.json')
+        paths[path_name]["pathbranches"].remove(path_branch)
+        await channel.send(
+            f"Sucessfully deleted branch `#{client.get_channel(path_branch).name}` from path `{path_name}`"
+        )
+        save_file(path_file, 'pathfile.json')
 
     #changes the summon for a thing
     if header == f'{summon}summon':
