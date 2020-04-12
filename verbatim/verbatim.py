@@ -26,6 +26,11 @@ COMMAND_DESCRIPTIONS = [
 ]
 
 
+class Error(Exception):
+    def __init__(self, err_msg):
+        self.err_msg = err_msg
+
+
 async def print_help(summon: str, channel) -> None:
     embed_help = discord.Embed(
         title="Help",
@@ -37,20 +42,17 @@ async def print_help(summon: str, channel) -> None:
     await channel.send(embed=embed_help)
 
 
-async def register(message, channel):
+async def register(message, channel) -> None:
     path_file = get_file('pathfile.json')
-    is_user = False
     for user in path_file:
         if user == str(message.author.id):
-            is_user = True
-    if is_user:
-        await channel.send("you've already registered!")
-        return
+            raise Error(err_msg="You've already registered!")
     path_file[message.author.id] = {
         "paths": {}
     }
     await channel.send(f'Registered {message.author}')
     save_file(path_file, 'pathfile.json')
+
 
 @client.event
 async def on_ready():
@@ -75,13 +77,17 @@ async def on_message(message):
     header = the_message[0].lower()
     channel = message.channel
 
-    # it's the help page u maga 4head`
-    if header == f'{summon}help':
-        await print_help(summon=summon, channel=channel)
+    try:
+        # it's the help page u maga 4head`
+        if header == f'{summon}help':
+            await print_help(summon=summon, channel=channel)
 
-    # registers a user to the bot
-    elif header == f'{summon}register':
-        await register(message, channel)
+        # registers a user to the bot
+        elif header == f'{summon}register':
+            await register(message, channel)
+    except Error as e:
+        await channel.send(e.err_msg)
+        return
 
     # creates a path
     if header == f'{summon}createpath':
