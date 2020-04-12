@@ -74,8 +74,8 @@ async def on_message(message):
     summons = get_file('summons.json')
     if str(message.guild.id) in summons:
         summon = summons[str(message.guild.id)]
-    theMessage = message.content.lower().split(' ')
-    header = theMessage[0].lower()
+    the_message = message.content.lower().split(' ')
+    header = the_message[0].lower()
     channel = message.channel
 
     try:
@@ -102,29 +102,29 @@ async def on_message(message):
         if isinstance(message.channel, discord.DMChannel):
             await channel.send("You can't set a path in a DM")
             return
-        if len(theMessage) > 2 or len(theMessage) < 2:
+        if len(the_message) > 2 or len(the_message) < 2:
             await channel.send("Path names have to be one string, no spaces")
             return
         path_file = get_file('pathfile.json')
 
-        if stringId not in pathFile:
+        if stringId not in path_file:
             await channel.send("You have to -register first before creating a path")
 
-        userPaths = pathFile[stringId]["paths"]
+        userPaths = path_file[stringId]["paths"]
 
         if userPaths != 0:
             for path in userPaths:
-                if path == theMessage[1]:
-                    await channel.send(f"You already have a path by the name of {theMessage[1]}")
+                if path == the_message[1]:
+                    await channel.send(f"You already have a path by the name of {the_message[1]}")
                     return
 
-        userPaths[theMessage[1]] = {
+        userPaths[the_message[1]] = {
                 "pathserver":message.channel.guild.id,
                 "pathbranches":[
                 ]
             }
-        await channel.send(f'Path created with name `{theMessage[1]}`')
-        save_file(pathFile, '../../pathfile.json')
+        await channel.send(f'Path created with name `{the_message[1]}`')
+        save_file(path_file, '../../pathfile.json')
 
     #adds a branch
     if header == f'{summon}addbranch':
@@ -138,23 +138,23 @@ async def on_message(message):
         if isinstance(message.channel, discord.DMChannel):
             await channel.send("Do this in a server")
             return
-        if len(theMessage) > 2:
+        if len(the_message) > 2:
             await channel.send("Path names have to be one 'word', with no spaces")
             return
         #-----------------------------
 
 
-        if stringId not in pathFile:
+        if stringId not in path_file:
             await channel.send("You must first register before adding branches")
             return
 
-        userPaths = pathFile[stringId]["paths"]
+        userPaths = path_file[stringId]["paths"]
 
-        if len(userPaths) == 0 or pathName not in userPaths:
+        if len(userPaths) == 0 or path_name not in userPaths:
             await channel.send("You can't add a branch to a path that doesn't exist!")
             return
 
-        branches = userPaths[pathName]["pathbranches"]
+        branches = userPaths[path_name]["pathbranches"]
         if message.channel.id in branches:
             await channel.send("You've already added this channel!")
             return
@@ -173,11 +173,11 @@ async def on_message(message):
         #-----------------------------
         #checks
 
-        if stringId not in pathFile:
+        if stringId not in path_file:
             await channel.send("You have to register first, and then create a path")
             return
 
-        if len(pathFile[stringId]["paths"]) == 0:
+        if len(path_file[stringId]["paths"]) == 0:
             await channel.send("You don't have any paths!")
             return
 
@@ -185,9 +185,9 @@ async def on_message(message):
             await message.author.create_dm()
         dmChannel = message.author.dm_channel
         await dmChannel.send("Your paths here")
-        for pathname in pathFile[stringId]["paths"]:
-            path = pathFile[stringId]["paths"][pathname]
-            embedPath = discord.Embed(title = f'Path: {pathname}', color = discord.Color.dark_orange())
+        for path_name in path_file[stringId]["paths"]:
+            path = path_file[stringId]["paths"][path_name]
+            embedPath = discord.Embed(title = f'Path: {path_name}', color = discord.Color.dark_orange())
             branches = ""
             if path["pathbranches"] == []:
                 embedPath.add_field(name = "Branches", value = "You have to first set a branch!", inline = False)
@@ -208,39 +208,39 @@ async def on_message(message):
 
         #checks
 
-        if stringUserId not in pathFile:
+        if string_user_id not in path_file:
             await channel.send("You have to register, create a path, and add branches before publishing a message")
             return
 
-        if len(pathFile[stringUserId]["paths"]) == 0:
+        if len(path_file[string_user_id]["paths"]) == 0:
             await channel.send("You haven't created any paths yet, how are you gonna send again? :think:")
             return
 
-        if pathName not in pathFile[stringUserId]["paths"]:
-            await channel.send(f"You haven't created a path under the name `{pathName}` yet")
+        if path_name not in path_file[string_user_id]["paths"]:
+            await channel.send(f"You haven't created a path under the name `{path_name}` yet")
             return
 
-        if len(pathFile[stringUserId]["paths"][pathName]["pathbranches"]) == 0:
+        if len(path_file[string_user_id]["paths"][path_name]["pathbranches"]) == 0:
             await channel.send("You haven't added any branches to this path first, do that and then publish a message")
             return
 
-        if len(theMessage) < 3:
+        if len(the_message) < 3:
             await channel.send("Your message actually needs to have content")
             return
         #-----------------------------
 
-        for branch in pathFile[stringUserId]["paths"][pathName]["pathbranches"]:
-            if len(theMessage) > 3:
-                content = ' '.join(theMessage[2:])
-            elif len(theMessage) == 3:
-                content = theMessage[2]
+        for branch in path_file[string_user_id]["paths"][path_name]["pathbranches"]:
+            if len(the_message) > 3:
+                content = ' '.join(the_message[2:])
+            elif len(the_message) == 3:
+                content = the_message[2]
             channel2send2 = client.get_channel(branch)
             await channel2send2.send(content)
 
     #deletes a path
     if header == f'{summon}removepath':
 
-        if len(theMessage) < 2:
+        if len(the_message) < 2:
             await channel.send("You have to specificy a path to delete!")
             return
 
@@ -249,7 +249,7 @@ async def on_message(message):
         path_name = the_message[1]
         user_paths = path_file[string_id]["paths"]
 
-        if stringId not in pathFile:
+        if stringId not in path_file:
             await channel.send("You have to register first!")
             return
 
@@ -257,21 +257,21 @@ async def on_message(message):
             await channel.send("You have to first have a path before you can remove one")
             return
 
-        if pathName not in userPaths:
-            await channel.send(f"You don't have a path under the name of `{pathName}`, use `-viewpaths` to view your created paths")
+        if path_name not in userPaths:
+            await channel.send(f"You don't have a path under the name of `{path_name}`, use `-viewpaths` to view your created paths")
             return
 
-        del(pathFile[stringId]["paths"][pathName])
+        del(path_file[stringId]["paths"][path_name])
         await channel.send("lol ok")
         await channel.send(f"Deleted path `{path_name}`")
         save_file(path_file, 'pathfile.json')
 
     #deletes a branch from a path
     if header == f'{summon}removebranch':
-        if len(theMessage) < 3:
+        if len(the_message) < 3:
             await channel.send("You're missing some variables there")
             return
-        elif len(theMessage) > 3:
+        elif len(the_message) > 3:
             await channel.send("Uh, you might think this bot excepts a lot of variables... there's 3, actually")
             return
 
@@ -281,7 +281,7 @@ async def on_message(message):
         path_branch = int(the_message[2])
         paths = path_file[string_id]["paths"]
 
-        if stringId not in pathFile:
+        if stringId not in path_file:
             await channel.send("You have to first register!")
             return
 
@@ -289,16 +289,16 @@ async def on_message(message):
             await channel.send("You have to first have a path, and then branches on that path...")
             return
 
-        if pathName not in paths:
-            await channel.send(f"You don't have a path under the name of `{pathName}`, use `-viewpaths` to view your created paths")
+        if path_name not in paths:
+            await channel.send(f"You don't have a path under the name of `{path_name}`, use `-viewpaths` to view your created paths")
             return
 
-        if paths[pathName]["pathbranches"] == []:
+        if paths[path_name]["pathbranches"] == []:
             await channel.send("Your path first has to have branches before I can remove them ")
             return
 
-        if pathBranch not in paths[pathName]["pathbranches"]:
-            await channel.send("So like, `{client.get_channel(pathBranch).name}`'s not, that's not a branch you have installed on your path (pro tip: use -viewpaths)")
+        if path_branch not in paths[path_name]["pathbranches"]:
+            await channel.send("So like, `{client.get_channel(path_branch).name}`'s not, that's not a branch you have installed on your path (pro tip: use -viewpaths)")
             return
 
         paths[path_name]["pathbranches"].remove(path_branch)
@@ -309,15 +309,15 @@ async def on_message(message):
 
     #changes the summon for a thing
     if header == f'{summon}summon':
-        if len(theMessage) != 2:
+        if len(the_message) != 2:
             await channel.send("Summons have to be 1 string only, with no spaces")
 
         else:
             strGuild = str(message.guild.id)
             summons = get_file('summons.json')
-            summons[strGuild] = theMessage[1]
+            summons[strGuild] = the_message[1]
             save_file(summons, 'summons.json')
-            await channel.send(f'Changed the summon for Verbatim in server {message.guild.name} to {theMessage[1]}')
+            await channel.send(f'Changed the summon for Verbatim in server {message.guild.name} to {the_message[1]}')
 
     #faq
     if header == f'{summon}faq':
