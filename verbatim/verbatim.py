@@ -10,19 +10,27 @@ embed_color = settings["color"]
 client = discord.Client()
 
 COMMAND_DESCRIPTIONS = [
-    ('register', ("Registers you to Verbatim's 'database' of sorts. "
-                 "It makes things faster I guess, and makes it so different users can have the same path name.")),
     ('createpath `path name`', "Creates your first path"),
-    ('addbranch `path name`', ("Adds a branch to a path, this is required to publish")),
+    ('branch add/remove `channel ID` `path name`', ("Adds a branch to a path from a server, this is required to publish. "
+                                                    "You can get a server's ID via right clicking on it in Dev mode or"
+                                                    "use the built in command -serverid")),
     ('publish `path name` `content`', ("Publishes your messages in a typical text form through a branch "
                                       "of your choice, also you "
                                       "can't ping roles because Discord API)")),
     ('viewpaths', "View your currently registered paths, including branches"),
     ('removepath `path name`', "Deletes a path, note, there is no confirmation, so you do it once, and it's gone"),
-    ('removebranch `path name` `channel ID`', "Deletes a branch, no confirmation, get channel ID with -viewpaths"),
     ('faq', ("Few some questions and answers (they aren't really 'frequently' "
             "asked because as of now the bot isn't popular enough :/)")),
-    ('ping', ("Gets your latency and things like that"))
+    ('ping', ("Gets your latency and things like that")),
+    ('serverid', ("Gets the current server's id, this is useful for adding and removing branches (see above)")),
+    ('whitelist', ("Whitelists users for this server, this allows them to access `publish` and `viewpaths` commands"))
+]
+
+WHITELIST_HELP = [
+    ('add `user id`', ("Adds a user to the whitelist. Whitelisted users can access `publish` and `viewpaths` commands only")), 
+    ('remove `user id`', ("Removes a user from the whitelist.")),
+    ('view', ("Views the current whitelist for the server, this lists a user's name, and user ID which can be used"
+            " to remove them from the whitelist"))
 ]
 
 
@@ -37,22 +45,18 @@ async def print_help(summon: str, channel) -> None:
         description="A quick how 2 on how to do things",
         color=discord.Colour(embed_color),
     )
+    embed_help.set_author(name = "",
+        icon_url="https://i.imgur.com/6ZuCZT5.png"
+    )
     for command, description in COMMAND_DESCRIPTIONS:
-        embed_help.add_field(name=f'{summon}{command}', value=description, inline=False)
+        embed_help.add_field(
+            name=f'{summon}{command}', 
+            value=description, 
+            inline=False)
     await channel.send(embed=embed_help)
     await channel.send(embed=embed_help)
 
 
-async def register(message, channel) -> None:
-    path_file = get_file('pathfile.json')
-    for user in path_file:
-        if user == str(message.author.id):
-            raise Error(err_msg="You've already registered!")
-    path_file[message.author.id] = {
-        "paths": {}
-    }
-    await channel.send(f'Registered {message.author}')
-    save_file(path_file, 'pathfile.json')
 
 
 @client.event
@@ -64,13 +68,12 @@ async def on_ready():
 async def on_message(message):
 
     #===
-    #role check
+    #bot check
 
     if message.author.bot:
         return
 
-    ''' if message.author.top_role.permissions.manage_guild == False:
-        return '''
+    
 
 
     #check for summon
@@ -87,158 +90,181 @@ async def on_message(message):
         if header == f'{summon}help':
             await print_help(summon=summon, channel=channel)
 
-        # registers a user to the bot
-        elif header == f'{summon}register':
-            await register(message, channel)
     except Error as e:
         await channel.send(e.err_msg)
         return
 
-    #creates a path
-    if header == f'{summon}createpath':
-
-        stringId = str(message.author.id)
-
-        #-----------------------------
-        #prelim checks
-        if isinstance(message.channel, discord.DMChannel):
-            await channel.send("You can't set a path in a DM")
+    #-------------------------------------------------------------------------------------------------------------
+    #stuff reserved for whitelisted people or admins
+    white_list = get_file('whitelist.json')
+    string_server_id = str(message.guild.id) 
+    if message.author.top_role.permissions.administrator == False:
+        if string_server_id not in white_list:
             return
-        if len(the_message) > 2 or len(the_message) < 2:
-            await channel.send("Path names have to be one string, no spaces")
-            return
-        path_file = get_file('pathfile.json')
-
-        if stringId not in path_file:
-            await channel.send("You have to -register first before creating a path")
-
-        userPaths = path_file[stringId]["paths"]
-
-        if userPaths != 0:
-            for path in userPaths:
-                if path == the_message[1]:
-                    await channel.send(f"You already have a path by the name of {the_message[1]}")
-                    return
-
-        userPaths[the_message[1]] = {
-                "pathserver":message.channel.guild.id,
-                "pathbranches":[
-                ]
-            }
-        await channel.send(f'Path created with name `{the_message[1]}`')
-        save_file(path_file, '../../pathfile.json')
-
-    #adds a branch
-    if header == f'{summon}addbranch':
-
-        path_file = get_file('pathfile.json')
-        path_name = the_message[1]
-        string_id = str(message.author.id)
-
-        #-----------------------------
-        #prelim checks
-        if isinstance(message.channel, discord.DMChannel):
-            await channel.send("Do this in a server")
-            return
-        if len(the_message) > 2:
-            await channel.send("Path names have to be one 'word', with no spaces")
-            return
-        #-----------------------------
-
-        if stringId not in path_file:
-            await channel.send("You must first register before adding branches")
-            return
-
-        userPaths = path_file[stringId]["paths"]
-
-        if len(userPaths) == 0 or path_name not in userPaths:
-            await channel.send("You can't add a branch to a path that doesn't exist!")
-            return
-
-        branches = userPaths[path_name]["pathbranches"]
-        if message.channel.id in branches:
-            await channel.send("You've already added this channel!")
-            return
-        branches.append(message.channel.id)
-
-        save_file(path_file, 'pathfile.json')
-        await channel.send(f'Successfully added `#{message.channel.name}` to path `{path_name}`')
-
-    #views paths
-    if header == f'{summon}viewpaths':
-
-        path_file = get_file('pathfile.json')
-        string_id = str(message.author.id)
-
-        #-----------------------------
-        #checks
-
-        if stringId not in path_file:
-            await channel.send("You have to register first, and then create a path")
-            return
-
-        if len(path_file[stringId]["paths"]) == 0:
-            await channel.send("You don't have any paths!")
-            return
-        #-----------------------------
-
-
-        if message.author.dm_channel == None:
-            await message.author.create_dm()
-        dmChannel = message.author.dm_channel
-        await dmChannel.send("Your paths here")
-        for path_name in path_file[stringId]["paths"]:
-            path = path_file[stringId]["paths"][path_name]
-            embedPath = discord.Embed(title = f'Path: {path_name}', color = discord.Color.dark_orange())
-            branches = ""
-            if path["pathbranches"] == []:
-                embedPath.add_field(name = "Branches", value = "You have to first set a branch!", inline = False)
-            else:
-                for branch in path["pathbranches"]:
-                    branchchannel = client.get_channel(branch)
-                    branches += f"\t`#{branchchannel.name}` in server `{branchchannel.guild.name}`\n\tChannel ID: `{branch}`\n"
-                embedPath.add_field(name = "Branches", value = branches, inline = False)
-            await dmChannel.send(embed = embedPath)
-        await channel.send("Check your DM's")
+        else:
+            if str(message.author.id) not in white_list[string_server_id]:
+                return
 
     #publishes a message
     if header == f'{summon}publish':
 
         path_name = the_message[1]
         path_file = get_file('pathfile.json')
-        string_user_id = str(message.author.id)
+        string_server_id = str(message.guild.id)
 
         #-----------------------------
         #checks
 
-        if string_user_id not in path_file:
+        if string_server_id not in path_file:
             await channel.send("You have to register, create a path, and add branches before publishing a message")
             return
 
-        if len(path_file[string_user_id]["paths"]) == 0:
-            await channel.send("You haven't created any paths yet, how are you gonna send again? :think:")
+        if path_file[string_server_id] == {}:
+            await channel.send("You haven't created any paths in this server :think:")
             return
 
-        if path_name not in path_file[string_user_id]["paths"]:
+        if path_name not in path_file[string_server_id]:
             await channel.send(f"You haven't created a path under the name `{path_name}` yet")
             return
 
-        if len(path_file[string_user_id]["paths"][path_name]["pathbranches"]) == 0:
+        if len(path_file[string_server_id][path_name]) == 0:
             await channel.send("You haven't added any branches to this path first, do that and then publish a message")
             return
 
-        if len(the_message) < 3:
+        if len(the_message) < 2:
             await channel.send("Your message actually needs to have content")
             return
         #-----------------------------
 
-        for branch in path_file[string_user_id]["paths"][path_name]["pathbranches"]:
+        for branch in path_file[string_server_id][path_name]:
             if len(the_message) > 3:
                 content = ' '.join(the_message[2:])
             elif len(the_message) == 3:
                 content = the_message[2]
             channel2send2 = client.get_channel(branch)
             await channel2send2.send(content)
+
+    #views paths
+    if header == f'{summon}viewpaths':
+
+        path_file = get_file('pathfile.json')
+        string_server_id = str(message.guild.id)
+
+        #-----------------------------
+        #checks
+
+        if string_server_id not in path_file:
+            await channel.send("You haven't created any paths in this server yet!")
+            return
+
+        server_paths = path_file[string_server_id]
+        if server_paths == {}:
+            await channel.send("There are no paths assigned to this server!")
+
+        if message.author.dm_channel == None:
+            await message.author.create_dm()
+        dmChannel = message.author.dm_channel
+
+        await dmChannel.send(f"Paths assigned to server `{message.guild.name}`")
+        for path in server_paths:
+            embedPath = discord.Embed(title = f'Path: {path}', color = discord.Color.dark_orange())
+            branches = ""
+            if server_paths[path] == []:
+                embedPath.add_field(name = "Branches", value = "No branches", inline = False)
+            else:
+                for branch in server_paths[path]:
+                    branchchannel = client.get_channel(branch)
+                    branches += f"\t`#{branchchannel.name}` in server `{branchchannel.guild.name}`\n\tChannel ID: `{branch}`\n"
+                embedPath.add_field(name = "Branches", value = branches, inline = False)
+            await dmChannel.send(embed = embedPath)
+        await channel.send("Check your DM's")
+    
+    #-------------------------------------------------------------------------------------------------------------
+    #stuff reserved for admins
+
+    if message.author.top_role.permissions.administrator == False:
+        return
+
+    #creates a path
+    if header == f'{summon}createpath':
+
+        string_server_id = str(message.guild.id)
+
+        #-----------------------------
+        #prelim checks
+        if isinstance(message.channel, discord.DMChannel):
+            await channel.send("You can't set a path in a DM, you have to set it in the hub")
+            return
+        if len(the_message) > 2 or len(the_message) < 2:
+            await channel.send("Path names have to be one string, no spaces")
+            return
+
+        path_name = the_message[1]
+        path_file = get_file('pathfile.json')
+
+        try:
+            path_file[string_server_id]
+        except KeyError:
+            path_file[string_server_id] = {}
+
+        server_paths = path_file[string_server_id]
+
+        if path_name in server_paths:
+            await channel.send(f"You've already added a path to this server by the name {path_name}")
+            return
+        else:
+            server_paths[path_name] = []
+            await channel.send(f'Path created with name `{path_name}`')
+            save_file(path_file, 'pathfile.json')
+
+    #adds a branch
+    if header == f'{summon}branch':
+
+        #-----------------------------
+        #prelim checks
+        if isinstance(message.channel, discord.DMChannel):
+            await channel.send("Do this in a server")
+            return
+        if len(the_message) > 4:
+            await channel.send("Path names have to be one 'word', with no spaces")
+            return
+        try:
+            int(the_message[2])
+        except ValueError:
+            await channel.send("Your server ID must be a string of numbers with no spaces")
+            return
+        #-----------------------------
+
+        path_file = get_file('pathfile.json')
+        path_name = the_message[3]
+        server_id = the_message[2]
+        
+        branch_command = the_message[1]
+
+        if str(server_id) not in path_file:
+            await channel.send(f"We've encountered an error,  you haven't created a path in your server yet!")
+            return
+        elif path_name not in path_file[server_id]:
+            await channel.send(f"There isn't a path by the name {path_name} registered to your server!")
+            return
+        server_paths = path_file[server_id]
+        branches = path_file[server_id][path_name]
+
+        if branch_command == "add":
+            if message.channel.id in branches:
+                await channel.send("You've already added this channel!")
+                return
+            branches.append(message.channel.id)
+            await channel.send(f'Successfully added `#{message.channel.name}` to path `{path_name}`')
+
+        elif branch_command == "remove":
+            if message.channel.id not in branches:
+                await channel.send("You haven't added this channel yet!")
+                return
+            branches.remove(message.channel.id)
+            await channel.send(f'Successfully remove `#{message.channel.name}` from path `{path_name}`')
+
+        save_file(path_file, 'pathfile.json')
 
     #deletes a path
     if header == f'{summon}removepath':
@@ -251,72 +277,20 @@ async def on_message(message):
             return
 
         path_file = get_file('pathfile.json')
-        string_id = str(message.author.id)
         path_name = the_message[1]
-        user_paths = path_file[string_id]["paths"]
+        string_server_id = str(message.guild.id)
 
-        if stringId not in path_file:
-            await channel.send("You have to register first!")
-            return
+        if string_server_id not in path_file:
+            await channel.send("You have to create a path first!")
 
-        if userPaths == {}:
-            await channel.send("You have to first have a path before you can remove one")
-            return
-
-        if path_name not in userPaths:
+        if path_name not in path_file[string_server_id]:
             await channel.send(f"You don't have a path under the name of `{path_name}`, use `-viewpaths` to view your created paths")
             return
         #-----------------------------
 
-        del(path_file[stringId]["paths"][path_name])
+        del(path_file[string_server_id][path_name])
         await channel.send("lol ok")
         await channel.send(f"Deleted path `{path_name}`")
-        save_file(path_file, 'pathfile.json')
-
-    #deletes a branch from a path
-    if header == f'{summon}removebranch':
-
-        #-----------------------------
-        #checks
-
-        if len(the_message) < 3:
-            await channel.send("You're missing some variables there")
-            return
-        elif len(the_message) > 3:
-            await channel.send("Uh, you might think this bot excepts a lot of variables... there's 3, actually")
-            return
-
-        path_file = get_file('pathfile.json')
-        string_id = str(message.author.id)
-        path_name = the_message[1]
-        path_branch = int(the_message[2])
-        paths = path_file[string_id]["paths"]
-
-        if stringId not in path_file:
-            await channel.send("You have to first register!")
-            return
-
-        if paths == {}:
-            await channel.send("You have to first have a path, and then branches on that path...")
-            return
-
-        if path_name not in paths:
-            await channel.send(f"You don't have a path under the name of `{path_name}`, use `-viewpaths` to view your created paths")
-            return
-
-        if paths[path_name]["pathbranches"] == []:
-            await channel.send("Your path first has to have branches before I can remove them ")
-            return
-
-        if path_branch not in paths[path_name]["pathbranches"]:
-            await channel.send("So like, `{client.get_channel(path_branch).name}`'s not, that's not a branch you have installed on your path (pro tip: use -viewpaths)")
-            return
-        #-----------------------------
-
-        paths[path_name]["pathbranches"].remove(path_branch)
-        await channel.send(
-            f"Sucessfully deleted branch `#{client.get_channel(path_branch).name}` from path `{path_name}`"
-        )
         save_file(path_file, 'pathfile.json')
 
     #changes the summon for a thing
@@ -339,5 +313,99 @@ async def on_message(message):
     if header == f'{summon}ping':
         embedPing = discord.Embed(title = "Ping!", description = f'Ping! {round(client.latency, 2)} ms', color = discord.Colour(embed_color))
         await channel.send(embed = embedPing)
+
+
+
+    #-------------------------------------------------------------------------------------------------------------
+    #new stuff/admin stuff
+    if header == f'{summon}whitelist':
+    
+        str_guild = str(message.guild.id)
+        whitelist_command = ""
+
+        if len(the_message) == 1:
+            whitelist_command = "help"
+        else:
+            whitelist_command = the_message[1]
+        
+        #---------------------------------
+
+        if whitelist_command == "add" or whitelist_command == "remove":
+            
+            white_list = get_file('whitelist.json')
+
+            #checks
+            try:
+                int(the_message[2])
+                
+            except ValueError:
+                await channel.send("User IDs have to be numbers, you can get a user ID by going into dev mode")
+            except IndexError:
+                await channel.send("Oops, either you forgot to specify a user ID, or a whitelist command")
+            
+            user_id = int(the_message[2])
+            user_name = client.get_user(user_id).name
+            #---
+
+            #add
+            if whitelist_command == "add":
+                if str_guild not in white_list:
+                    white_list[str_guild] = {
+                    }
+                elif user_id in white_list[str_guild]:
+                    await channel.send("You've already added this user")
+                    return
+                else: 
+                    white_list[str_guild][user_id] = user_name
+                await channel.send(f'Added `{user_name}` to the whitelist for `{message.guild.name}`, they can now use {summon}publish')
+                save_file(white_list, 'whitelist.json')
+                return
+
+            #remove
+            elif whitelist_command == "remove":
+                if str_guild not in white_list or white_list[str_guild] == {}:
+                    await channel.send("You haven't added anyone to the whitelist yet!")
+                    return
+                else:
+                    del(white_list[str_guild][str(user_id)])
+                    await channel.send(f"Successfully removed `{user_name}` from the whitelist")
+                    save_file(white_list, 'whitelist.json')
+                    return
+
+        elif whitelist_command == "view":
+            
+            white_list = get_file('whitelist.json')
+            
+            #checks
+            if str_guild not in white_list or white_list[str_guild] == {}:
+                await channel.send("You haven't added anyone to the whitelist yet! Use `{summon}whitelist userid` to whitelist a user")
+                return
+            #---
+
+            embed_white_list = discord.Embed(title = f'{message.guild.name} Whitelist')
+            embed_white_list.set_author(name = message.author.name, icon_url="https://i.imgur.com/6ZuCZT5.png")
+            embed_this = ""
+            for user_id, user in white_list[str_guild].items():
+                embed_this += f'{user}\n\tID: `{user_id}`\n\n'
+            embed_white_list.add_field(name = "Users", value = embed_this, inline = False)
+
+            await channel.send(embed = embed_white_list)
+        
+        elif whitelist_command == "help":
+            embed_white_list_help = discord.Embed(
+                title = f'{message.guild.name} Whitelist Info'
+                )
+            for command, description in WHITELIST_HELP:
+                embed_white_list_help.add_field(
+                    name = f'{summon}{command}', 
+                    value = description,
+                    inline = False
+                    )
+            await channel.send(embed = embed_white_list_help)
+
+
+        
+
+        
 
 client.run(TOKEN)

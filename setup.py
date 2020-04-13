@@ -7,7 +7,7 @@ setup(
     install_requires=['discord'],
     url='',
     license='',
-    author='Rez',
+    author='Rez, Araett, and Jojo',
     author_email='do@it.yourself',
     description='Cross Discord server announcement bot.'
 )
