@@ -1,18 +1,7 @@
 {
-    "241288855368499200": {
-        "name": "Rez",
-        "paths": {
-            "update": {
-                "pathserver": 697669290865983558,
-                "pathhub": "697669290865983562",
-                "pathbranches": [
-                    697670158893842446
-                ]
-            }
-        }
-    },
-    "124916575294717952": {
-        "name": "jojo",
-        "paths": {}
+    "server id here": {
+        "path name": [
+            "branches here"
+        ]
     }
 }

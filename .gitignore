@@ -121,10 +121,3 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-#my things
-settings.json
-
-# Pyre type checker
-.pyre/
-settings.json
-*.json
