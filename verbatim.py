@@ -39,13 +39,12 @@ async def on_message(message):
     if header == f'{summon}help':
         embedHelp = discord.Embed(title = "Help", description = "A quick how 2 on how to do things", color = discord.Color.dark_orange())
         embedHelp.add_field(name = f'{summon}register', value = "Registers you to Verbatim's 'database' of sorts. It makes things faster I guess, and makes it so different users can have the same path name.", inline = False)
-        embedHelp.add_field(name = f'{summon}createpath `path name`', value = "Creates your first path and automatically assigns the hub to your current channel.", inline = False)
-        embedHelp.add_field(name = f'{summon}sethub `path name`', value = "Assigns a hub for your path, this is where you do all your publishing, it helps optimize things and prevents cluttering", inline = False)
-        embedHelp.add_field(name = f'{summon}addbranch `path name`', value = "Adds a branch to a path, this way you can publish in the hub and all those messages will be passed down to the branches", inline = False)
-        embedHelp.add_field(name = f'{summon}publish `path name` `content`', value = "Publishes your messages in a typical text form through a branch of your choice\n(Remember to do this in your path's hub, also you can't ping roles because Discord API)", inline = False)
+        embedHelp.add_field(name = f'{summon}createpath `path name`', value = "Creates your first path", inline = False)
+        embedHelp.add_field(name = f'{summon}addbranch `path name`', value = "Adds a branch to a path, this way you can publish from wherever", inline = False)
+        embedHelp.add_field(name = f'{summon}publish `path name` `content`', value = "Publishes your messages in a typical text form through a path of your choice, also you can't ping roles because Discord API)", inline = False)
         embedHelp.add_field(name = f'{summon}viewpaths', value = "View your currently registered paths, including branches", inline = False)
         embedHelp.add_field(name = f'{summon}removepath `path name`', value = "Deletes a path, note, there is no confirmation, so you do it once, and it's gone", inline = False)
-        embedHelp.add_field(name = f'{summon}removebranch `path name` `channel ID`', value = "Deletes a branch, no confirmation, get channel ID with -viewpaths")
+        embedHelp.add_field(name = f'{summon}removebranch `path name` `channel ID`', value = "Deletes a branch, no confirmation, get channel ID with {summon}viewpaths")
         embedHelp.add_field(name = f'{summon}faq', value = "Few some questions and answers (they aren't really 'frequently' asked because as of now the bot isn't popular enough :/)", inline = False)
         await channel.send(embed = embedHelp)
 
@@ -92,100 +91,15 @@ async def on_message(message):
                 if path == theMessage[1]:
                     await channel.send(f"You already have a path by the name of {theMessage[1]}")
                     return
-        #-----------------------------
-        
-        approvedHubs = getFile('approvedhubs.json')
-
-        if stringChannelId in approvedHubs:
-            #see if there is a path registered under that hub for that user
-            if stringId in approvedHubs[stringChannelId]:
-                await channel.send(f'You already have a path with a hub registered to `#{message.channel.name}` by the name of `{approvedHubs[stringChannelId][stringId]}`')
-                return
-
-
-            #if there isn't a path registered under that channel for that user, add it
-            if stringId not in approvedHubs[stringChannelId]: #is a string because dictionaries are weird
-                approvedHubs[stringChannelId][stringId] = theMessage[1]
-
-        
-        if stringChannelId not in approvedHubs:
-            approvedHubs[stringChannelId] = {
-                stringId:theMessage[1]
-            }
-        #-----------------------------
         
         userPaths[theMessage[1]] = {
                 "pathserver":message.channel.guild.id,
-                "pathhub":str(message.channel.id),
                 "pathbranches":[
                 ]
             }
-        await channel.send(f'Path created with name `{theMessage[1]}`, path hub automatically set to `{message.channel}`, use -setHub in a channel in `{message.channel.guild.name}` to change hub for this path.')
+        await channel.send(f'Path created with name `{theMessage[1]}`')
         saveFile(pathFile, 'pathfile.json')
-        saveFile(approvedHubs, 'approvedhubs.json')
-   
-    #sets the hub
-    if header == f'{summon}sethub':
-        
-        pathFile = getFile('pathfile.json')
-        approvedHubs = getFile('approvedhubs.json') 
-        if len(theMessage) == 1:
-            await channel.send("You have to specify that path you're assigning this channel to!")
-            return
-        pathName = theMessage[1]
-        stringId = str(message.author.id)
-        stringHubId = str(message.channel.id)
-        
 
-        #-----------------------------
-        #prelim checks
-        if isinstance(message.channel, discord.DMChannel):
-            await channel.send("Do this in a server, and do it in the channel you intend to be the hub")
-            return
-        if len(theMessage) > 2:
-            await channel.send("Path names have to be one string, with no spaces")
-            return
-        
-        if stringId not in pathFile:
-            await channel.send("You haven't registered yet!")
-            return
-        
-        userPaths = pathFile[stringId]["paths"]
-        if len(userPaths) == 0:
-            await channel.send("You haven't created a path yet, how are you gonna set up a hub :thonk:")
-            return
-        
-        if pathName not in userPaths:
-            await channel.send("You haven't made a path under that name yet")
-            return
-
-
-        oldStringHubId = pathFile[stringId]["paths"][pathName]["pathhub"]
-        if str(message.channel.id) == oldStringHubId:
-            await channel.send("This path is already set to this channel!")
-            return
-        #-----------------------------
-        
-        
-
-        if pathName in userPaths:
-            del(approvedHubs[oldStringHubId][stringId])
-            
-            #if the hub isn't registered
-            if stringHubId not in approvedHubs:
-                userPaths[pathName]["pathhub"] = stringHubId
-                approvedHubs[stringHubId] = {
-                    stringId:pathName
-                }
-                await channel.send(f'Successfully set the hub for `{pathName}` to channel `#{message.channel.name}`')
-            #if the hub is already registered
-            elif stringHubId in approvedHubs:
-                approvedHubs[stringHubId][stringId] = pathName
-                userPaths[pathName]["pathhub"] = stringHubId
-                await channel.send(f'Successfully set the hub for `{pathName}` to channel `#{message.channel.name}`')
-        saveFile(approvedHubs, 'approvedhubs.json')
-        saveFile(pathFile, 'pathfile.json')
-        
     #adds a branch
     if header == f'{summon}addbranch':
 
@@ -196,7 +110,7 @@ async def on_message(message):
         #-----------------------------
         #prelim checks
         if isinstance(message.channel, discord.DMChannel):
-            await channel.send("Do this in a server, and do it in the channel you intend to be the hub")
+            await channel.send("Do this in a server")
             return
         if len(theMessage) > 2:
             await channel.send("Path names have to be one 'word', with no spaces")
@@ -205,7 +119,7 @@ async def on_message(message):
 
         
         if stringId not in pathFile:
-            await channel.send("You must first register before creating your path... before then, assigning a hub...")
+            await channel.send("You must first register before creating your path before adding branches")
             return
 
         userPaths = pathFile[stringId]["paths"]
@@ -248,8 +162,6 @@ async def on_message(message):
         for pathname in pathFile[stringId]["paths"]:
             path = pathFile[stringId]["paths"][pathname]
             embedPath = discord.Embed(title = f'Path: {pathname}', color = discord.Color.dark_orange())
-            hub = client.get_channel(int(path["pathhub"]))
-            embedPath.add_field(name = "Hub", value = f'Your hub is set to `#{hub.name}` in the server `{hub.guild.name}`', inline = False)
             branches = ""
             if path["pathbranches"] == []:
                 embedPath.add_field(name = "Branches", value = "You have to first set a branch!", inline = False)
@@ -264,7 +176,6 @@ async def on_message(message):
     #publishes a message
     if header == f'{summon}publish':
         
-        approvedHubs = getFile('approvedhubs.json')
         pathName = theMessage[1]
         pathFile = getFile('pathfile.json')
         stringUserId = str(message.author.id)
@@ -274,9 +185,6 @@ async def on_message(message):
 
         if stringUserId not in pathFile:
             await channel.send("You have to register, create a path, and add branches before publishing a message")
-            return
-
-        if stringChannelId not in approvedHubs:
             return
         
         if len(pathFile[stringUserId]["paths"]) == 0:
@@ -314,7 +222,6 @@ async def on_message(message):
         pathFile = getFile('pathfile.json')
         stringId = str(message.author.id)
         pathName = theMessage[1]
-        approvedHubs = getFile('approvedhubs.json')
         userPaths = pathFile[stringId]["paths"]
 
         if stringId not in pathFile:
@@ -329,8 +236,6 @@ async def on_message(message):
             await channel.send(f"You don't have a path under the name of `{pathName}`, use `-viewpaths` to view your created paths")
             return
         
-        del(approvedHubs[userPaths[pathName]["pathhub"]][stringId])
-        saveFile(approvedHubs, 'approvedhubs.json')
 
         del(pathFile[stringId]["paths"][pathName])
         await channel.send("lol ok")
@@ -391,8 +296,7 @@ async def on_message(message):
     #faq
     if header == f'{summon}faq':
         embedFaq = discord.Embed(title = "FAQ", description = "Frequently asked questions that aren't frequently asked") 
-        embedHelp.add_field(name = "What's the point of hubs?", value = "This bot scans everything, it would be a pain to sort thorugh every user and check if that channel is in a path, instead only hubs are checked", inline = False)       
-
-
+        embedFaq.add_field(name = "Can it function where it just automatically publishes a message from a channel?", value = "Kinda, originally it could do that, but the idea was scrapped in favor for a {summon}publish anywhere approach", inline = False)
+        await channel.send(embed = embedFaq)
 
 client.run(TOKEN)
