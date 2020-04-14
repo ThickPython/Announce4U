@@ -10,27 +10,21 @@ embed_color = settings["color"]
 client = discord.Client()
 
 COMMAND_DESCRIPTIONS = [
-    ('createpath `path name`', "Creates your first path"),
-    ('branch add/remove `channel ID` `path name`', ("Adds a branch to a path from a server, this is required to publish. "
-                                                    "You can get a server's ID via right clicking on it in Dev mode or"
-                                                    "use the built in command -serverid")),
-    ('publish `path name` `content`', ("Publishes your messages in a typical text form through a branch "
-                                      "of your choice, also you "
-                                      "can't ping roles because Discord API)")),
-    ('viewpaths', "View your currently registered paths, including branches"),
-    ('removepath `path name`', "Deletes a path, note, there is no confirmation, so you do it once, and it's gone"),
-    ('faq', ("Few some questions and answers (they aren't really 'frequently' "
-            "asked because as of now the bot isn't popular enough :/)")),
+    ('createpath `path name`', ("Creates your first path")),
+    ('removepath `path name`', "Deletes a path, (note: there is no confirmation)"),
+    ('branch add/remove `channel ID` `path name`', ("Add or Remove Paths on your server. This is required to start Branching.")),
+    ('publish `path name` `content`', ("Publishes your message to all Branches tied to the specified Path. It can ping @here, @everyone, and individual Users, but not Server-Roles and Server-Channels.")),
+    ('viewpaths', ("Grabs a list of Paths+Branches on your server")),
     ('ping', ("Gets your latency and things like that")),
     ('serverid', ("Gets the current server's id, this is useful for adding and removing branches (see above)")),
-    ('whitelist', ("Whitelists users for this server, this allows them to access `publish` and `viewpaths` commands"))
+    ('whitelist', ("Add or Remove a non-Admin User from being able to use the -publish and -viewpaths command")),
+    ('summon', ("Changes summon command from `-` to whatever you'd like it to be. (i.e. `!` or `?`)"))
 ]
 
 WHITELIST_HELP = [
-    ('add `user id`', ("Adds a user to the whitelist. Whitelisted users can access `publish` and `viewpaths` commands only")), 
-    ('remove `user id`', ("Removes a user from the whitelist.")),
-    ('view', ("Views the current whitelist for the server, this lists a user's name, and user ID which can be used"
-            " to remove them from the whitelist"))
+    ('whitelist add `user id`', ("Adds a user to the whitelist. Whitelisted users can access `publish` and `viewpaths` commands only")), 
+    ('whitelist remove `user id`', ("Removes a user from the whitelist.")),
+    ('whitelist view', ("Lists currently whitelisted Users in the server."))
 ]
 
 
@@ -60,7 +54,7 @@ async def print_help(summon: str, channel) -> None:
 
 @client.event
 async def on_ready():
-    await client.change_presence(status = discord.Status.online, activity= discord.Game(name = "-help"))
+    await client.change_presence(status = discord.Status.online, activity= discord.Game(name = "Branching out | -help"))
     print('Ready to start b r a n c h i n g out, haha get it?')
 
 @client.event
@@ -159,6 +153,7 @@ async def on_message(message):
         server_paths = path_file[string_server_id]
         if server_paths == {}:
             await channel.send("There are no paths assigned to this server!")
+            return
 
         if message.author.dm_channel == None:
             await message.author.create_dm()
@@ -178,6 +173,14 @@ async def on_message(message):
             await dmChannel.send(embed = embedPath)
         await channel.send("Check your DM's")
     
+    #server id
+    if header == f'{summon}serverid':
+        await channel.send(f'Your server id is `{message.guild.id}`')
+    
+    #channel id
+    if header == f'{summon}channel.id':
+        await channel.send(f"This channel's id is `{message.channel.id}`")
+
     #-------------------------------------------------------------------------------------------------------------
     #stuff reserved for admins
 
