@@ -1,13 +1,16 @@
 import discord
 import json
 
-def isAdmin():
+
+def is_admin():
     return True
 
-def getFile(filename):
+
+def get_file(filename):
     with open(filename, 'r') as filenameAsJson:
         return json.load(filenameAsJson)
 
-def saveFile(savethis, filename):
+
+def save_file(savethis, filename):
     with open(filename, 'w') as filenameAsJson:
         json.dump(savethis, filenameAsJson, indent = 4)
