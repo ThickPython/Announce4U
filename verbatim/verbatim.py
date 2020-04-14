@@ -12,7 +12,7 @@ client = discord.Client()
 COMMAND_DESCRIPTIONS = [
     ('createpath `path name`', ("Creates your first path")),
     ('removepath `path name`', "Deletes a path, (note: there is no confirmation)"),
-    ('branch add/remove `channel ID` `path name`', ("Add or Remove Paths on your server. This is required to start Branching.")),
+    ('branch add/remove `server ID` `path name`', ("Add or Remove Paths on your server. This is required to start Branching.")),
     ('publish `path name` `content`', ("Publishes your message to all Branches tied to the specified Path. It can ping @here, @everyone, and individual Users, but not Server-Roles and Server-Channels.")),
     ('viewpaths', ("Grabs a list of Paths+Branches on your server")),
     ('ping', ("Gets your latency and things like that")),
@@ -22,8 +22,8 @@ COMMAND_DESCRIPTIONS = [
 ]
 
 WHITELIST_HELP = [
-    ('whitelist add `user id`', ("Adds a user to the whitelist. Whitelisted users can access `publish` and `viewpaths` commands only")), 
-    ('whitelist remove `user id`', ("Removes a user from the whitelist.")),
+    ('whitelist add `@user`', ("Adds a user to the whitelist. Whitelisted users can access `publish` and `viewpaths` commands only")), 
+    ('whitelist remove `@user`', ("Removes a user from the whitelist.")),
     ('whitelist view', ("Lists currently whitelisted Users in the server."))
 ]
 
@@ -36,7 +36,7 @@ class Error(Exception):
 async def print_help(summon: str, channel) -> None:
     embed_help = discord.Embed(
         title="Help",
-        description="A quick how 2 on how to do things",
+        description="How to do the things that do the things",
         color=discord.Colour(embed_color),
     )
     embed_help.set_author(name = "",
@@ -55,7 +55,7 @@ async def print_help(summon: str, channel) -> None:
 
 @client.event
 async def on_ready():
-    await client.change_presence(status = discord.Status.online, activity= discord.Game(name = "Branching out | -help"))
+    await client.change_presence(status = discord.Status.online, activity= discord.Game(name = "Branching out | -help (for admins)"))
     print('Ready to start b r a n c h i n g out, haha get it?')
 
 @client.event
@@ -79,15 +79,7 @@ async def on_message(message):
     header = the_message[0].lower()
     channel = message.channel
 
-    try:
-        # it's the help page u maga 4head`
-        if header == f'{summon}help':
-            await print_help(summon=summon, channel=channel)
-
-    except Error as e:
-        await channel.send(e.err_msg)
-        return
-
+    
     #-------------------------------------------------------------------------------------------------------------
     #stuff reserved for whitelisted people or admins
     white_list = get_file('whitelist.json')
@@ -181,6 +173,17 @@ async def on_message(message):
     #channel id
     if header == f'{summon}channel.id':
         await channel.send(f"This channel's id is `{message.channel.id}`")
+
+    #help
+    try:
+        # it's the help page u maga 4head`
+        if header == f'{summon}help':
+            await print_help(summon=summon, channel=channel)
+
+    except Error as e:
+        await channel.send(e.err_msg)
+        return
+
 
     #-------------------------------------------------------------------------------------------------------------
     #stuff reserved for admins
@@ -338,42 +341,42 @@ async def on_message(message):
             white_list = get_file('whitelist.json')
 
             #checks
-            try:
-                int(the_message[2])
-                
-            except ValueError:
-                await channel.send("User IDs have to be numbers, you can get a user ID by going into dev mode")
-            except IndexError:
-                await channel.send("Oops, either you forgot to specify a user ID, or a whitelist command")
+            users = message.mentions    
+
+            if len(users) == 0:
+                await channel.send("You have to specify a user to whitelist")
+                return
             
-            user_id = int(the_message[2])
-            user_name = client.get_user(user_id).name
-            #---
+        
 
             #add
             if whitelist_command == "add":
-                if str_guild not in white_list:
-                    white_list[str_guild] = {
-                    }
-                elif user_id in white_list[str_guild]:
-                    await channel.send("You've already added this user")
-                    return
-                else: 
-                    white_list[str_guild][user_id] = user_name
-                await channel.send(f'Added `{user_name}` to the whitelist for `{message.guild.name}`, they can now use {summon}publish')
+                for userobj in users:
+                    user_id = userobj.id
+                    user_name = userobj.name
+                    if str_guild not in white_list:
+                        white_list[str_guild] = {
+                        }
+                    elif user_id in white_list[str_guild]:
+                        await channel.send("You've already added this user")
+                        return
+                    else: 
+                        white_list[str_guild][user_id] = user_name
+                    await channel.send(f'Added `{user_name}` to the whitelist for `{message.guild.name}`, they can now use {summon}publish')
                 save_file(white_list, 'whitelist.json')
-                return
 
             #remove
             elif whitelist_command == "remove":
-                if str_guild not in white_list or white_list[str_guild] == {}:
-                    await channel.send("You haven't added anyone to the whitelist yet!")
-                    return
-                else:
-                    del(white_list[str_guild][str(user_id)])
-                    await channel.send(f"Successfully removed `{user_name}` from the whitelist")
-                    save_file(white_list, 'whitelist.json')
-                    return
+                for userobj in users:
+                    user_id = userobj.id
+                    user_name = userobj.name
+                    if str_guild not in white_list or white_list[str_guild] == {}:
+                        await channel.send("You haven't added anyone to the whitelist yet!")
+                        return
+                    else:
+                        del(white_list[str_guild][str(user_id)])
+                        await channel.send(f"Successfully removed `{user_name}` from the whitelist")
+                save_file(white_list, 'whitelist.json')
 
         elif whitelist_command == "view":
             
@@ -389,7 +392,7 @@ async def on_message(message):
             embed_white_list.set_author(name = message.author.name, icon_url="https://i.imgur.com/6ZuCZT5.png")
             embed_this = ""
             for user_id, user in white_list[str_guild].items():
-                embed_this += f'{user}\n\tID: `{user_id}`\n\n'
+                embed_this += f'{user}\n'
             embed_white_list.add_field(name = "Users", value = embed_this, inline = False)
 
             await channel.send(embed = embed_white_list)
