@@ -121,5 +121,11 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+<<<<<<< HEAD
 
 .json
+=======
+.json
+
+
+>>>>>>> ece764844af16fc83b13db3c88c6626a19cc726a

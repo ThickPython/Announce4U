@@ -16,7 +16,7 @@ COMMAND_DESCRIPTIONS = [
     ('viewpaths', ("Grabs a list of Paths+Branches on your server")),
     ('serverid', ("Gets the current server's id, this is useful for adding and removing Branches (see above)")),
     ('whitelist', ("Add or remove a non-Admin user from being able to use the -publish and -viewpaths command")),
-    ('summon', ("Changes summon command from `-` to whatever you'd like it to be. (i.e. `!` or `v?`)")),
+    ('prefix', ("Changes prefix from `-` to whatever you'd like it to be. (i.e. `!` or `v?`)")),
     ('ping', ("Gets and returns your latency"))
 ]
 
@@ -187,7 +187,7 @@ async def on_message(message):
             else:
                 for branch in server_paths[path]:
                     branchchannel = client.get_channel(branch)
-                    branches += f"\t`#{branchchannel.name}` in server `{branchchannel.guild.name}`\n\tChannel ID: `{branch}`\n"
+                    branches += f"\t`#{branchchannel.name}` in server `{branchchannel.guild.name}`\n"
                 embedPath.add_field(name = "Branches", value = branches, inline = False)
             await dmChannel.send(embed = embedPath)
         await channel.send("Check your DM's")
@@ -328,16 +328,16 @@ async def on_message(message):
         save_file(path_file, 'pathfile.json')
    
     #changes the summon for a thing
-    if header == f'{summon}summon':
+    if header == f'{summon}prefix':
         if len(the_message) != 2:
-            await channel.send("Summons have to be 1 string only, with no spaces")
+            await channel.send("A prefix must be 1 string only, with no spaces")
 
         else:
             strGuild = str(message.guild.id)
             summons = get_file('summons.json')
             summons[strGuild] = the_message[1]
             save_file(summons, 'summons.json')
-            await channel.send(f'Changed the summon for Verbatim in server {message.guild.name} to {the_message[1]}')
+            await channel.send(f'Changed the prefix for Verbatim in server {message.guild.name} to {the_message[1]}')
 
     #ping
     if header == f'{summon}ping':
