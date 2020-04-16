@@ -4,7 +4,7 @@ from verbatim.otherThings import get_file, save_file
 
 settings = get_file("settings.json")
 TOKEN = settings["discord token"]
-embed_color = settings["color"]
+embed_color = 16604755
 
 
 client = discord.Client()
