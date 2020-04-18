@@ -135,11 +135,8 @@ async def on_message(message):
     the_message = message.content.split(" ")
     header = the_message[0].lower()
     alt_header = ' '.join(the_message[0:2])
-    print(alt_header == "<@!697650736498081885> prefix")
-    print(alt_header)
     channel = message.channel
 
-    print(message.content)
 
     #stuff for everyone
     if "697650736498081885" in message.content and "help" in message.content:
