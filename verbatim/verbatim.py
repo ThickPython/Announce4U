@@ -37,9 +37,9 @@ COMMAND_DESCRIPTIONS = [
         ),
     ),
     (
-        "summon",
+        "Prefix or `@verbatim prefix`",
         (
-            "Changes summon command from `-` to whatever you'd like it to be. (i.e. `!` or `v?`)"
+            "Changes prefixd from `-` to whatever you'd like it to be. (i.e. `!` or `v?`)"
         ),
     ),
     ("ping", ("Gets and returns your latency")),
@@ -113,7 +113,7 @@ async def print_help(type_help: str, summon: str, channel) -> None:
 async def on_ready():
     await client.change_presence(
         status=discord.Status.online,
-        activity=discord.Game(name="Branching out | -help (for admins)"),
+        activity=discord.Game(name="Branching out | -help"),
     )
     print("Ready to start b r a n c h i n g out, haha get it?")
 
@@ -134,13 +134,24 @@ async def on_message(message):
         summon = summons[str(message.guild.id)]
     the_message = message.content.split(" ")
     header = the_message[0].lower()
+    alt_header = ' '.join(the_message[0:2])
+    print(alt_header == "<@!697650736498081885> prefix")
+    print(alt_header)
     channel = message.channel
+
+    print(message.content)
+
+    #stuff for everyone
+    if "697650736498081885" in message.content and "help" in message.content:
+        # it's the help page u maga 4head`
+        await print_help(type_help="help", summon=summon, channel=channel)
+        
 
     # -------------------------------------------------------------------------------------------------------------
     # stuff reserved for whitelisted people or admins
     white_list = get_file("whitelist.json")
     string_server_id = str(message.guild.id)
-    if message.author.top_role.permissions.administrator == False:
+    if message.author.top_role.permissions.manage_guild == False and message.author.top_role.permissions.administrator == False:
         if string_server_id not in white_list:
             return
         else:
@@ -165,6 +176,10 @@ async def on_message(message):
 
         if path_file[string_server_id] == {}:
             await channel.send("You haven't created any paths in this server :think:")
+            return
+
+        if isinstance(message.channel, discord.DMChannel):
+            await channel.send("Do this in a server")
             return
 
         if path_name not in path_file[string_server_id]:
@@ -253,7 +268,7 @@ async def on_message(message):
     # -------------------------------------------------------------------------------------------------------------
     # stuff reserved for admins
 
-    if message.author.top_role.permissions.administrator == False:
+    if message.author.top_role.permissions.administrator == False and message.author.top_role.permissions.manage_guild == False:
         return
 
     # path create/remove
@@ -389,18 +404,26 @@ async def on_message(message):
         save_file(path_file, "pathfile.json")
 
     # changes the summon for a thing
-    if header == f"{summon}summon":
-        if len(the_message) != 2:
+    if header == f"{summon}prefix" or alt_header == "<@!697650736498081885> prefix":
+        if len(the_message) > 3:
             await channel.send("Summons have to be 1 string only, with no spaces")
+            return
 
-        else:
-            strGuild = str(message.guild.id)
-            summons = get_file("summons.json")
+        
+        strGuild = str(message.guild.id)
+        summons = get_file("summons.json")
+        if header == f"{summon}prefix":
             summons[strGuild] = the_message[1]
-            save_file(summons, "summons.json")
             await channel.send(
-                f"Changed the summon for Verbatim in server {message.guild.name} to {the_message[1]}"
+            f"Changed the summon for Verbatim in server {message.guild.name} to {the_message[1]}"
             )
+        if alt_header == "<@!697650736498081885> prefix":
+            summons[strGuild] = the_message[2]
+            await channel.send(
+            f"Changed the summon for Verbatim in server {message.guild.name} to {the_message[2]}"
+            )
+        save_file(summons, "summons.json")
+        
 
     # ping
     if header == f"{summon}ping":
