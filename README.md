@@ -1,3 +1,5 @@
+disclaimer i made this when i was a child and really inexperienced 
+
 # Verbatim
 ## The Problem
  So you're an admin. You moderate 16 servers, and you'd like to inform all of them of important news. How do you do it? Indeed, copy and pasting the same message across all your servers would be a pain. Then you have to monotonous act with a different message, in different channels to only a select group of your servers. It's time consuming, it's boring, and it's inefficient.
